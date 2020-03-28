@@ -1,7 +1,7 @@
 # -- coding: utf-8 --
 # @Time : 2020/3/20 下午6:02
 # @Author : Gao Shang
-# @File : networks.py
+# @File : model.py
 # @Software : PyCharm
 
 import torch.nn as nn

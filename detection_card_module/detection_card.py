@@ -158,7 +158,7 @@ def getCardPoint(image):
     img_binary = image_binary(img_filter)
 
     # 检测身份证区域
-    _, contours, _ = cv2.findContours(img_binary.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours, _ = cv2.findContours(img_binary.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = sorted(contours, key=cv2.contourArea, reverse=True)
 
     # 存储顶点的列表

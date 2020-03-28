@@ -8,15 +8,21 @@
 import cv2
 import numpy as np
 from scipy import signal
+import os
+
+
+absolute_path = os.path.dirname(__file__)
 
 
 def removeWatermark(image, laplace):
     # 设置身份证的宽高为445*280
     card_size = (445, 280)
     # 水印laplace模板
-    template_wm = [np.load('detection_text_module/template/watermark1_laplace.npy'), np.load('detection_text_module/template/watermark2_laplace.npy')]
+    template_wm = [np.load(absolute_path + '/template/watermark1_laplace.npy'),
+                   np.load(absolute_path + '/template/watermark2_laplace.npy')]
     # 二值图模板用于生成蒙版以进行后续去水印操作
-    img_wm = [np.load('detection_text_module/template/watermark1_solid.npy'), np.load('detection_text_module/template/watermark2_solid.npy') ]
+    img_wm = [np.load(absolute_path + '/template/watermark1_solid.npy'),
+              np.load(absolute_path + '/template/watermark2_solid.npy')]
     img_shape = [img.shape for img in img_wm]
     # 锐化内核
     kernel = np.array([[0, -1, 0],
@@ -78,7 +84,7 @@ def removeWatermark(image, laplace):
             if transparency[i, j]:
                 trans = transparency[i, j] * alpha
                 # 线性变换
-                image[i, j] = max(min((image[i, j] - trans*mc) / (1-trans), b), 20)
+                image[i, j] = min((image[i, j] - trans*mc) / (1-trans), b)
 
     # 图像去模糊，laplace锐化
     image = cv2.filter2D(image, -1, kernel=kernel)
@@ -92,17 +98,17 @@ def getTextLine(image, points):
     # 设置身份证的宽高为445*280
     card_size = (445, 280)
     # "仅限BDCI比赛使用"水印出现在左上角，用于旋转矫正
-    template_logo = np.load('detection_text_module/template/left-top_logo.npy')
+    template_logo = np.load(absolute_path + '/template/left-top_logo.npy')
     # 正反面Laplace模板，用于边缘检测误差造成的平移矫正
     # 用拉普拉斯而非二值图做模板，因为边缘信息更加丰富，定位更准确
-    template_front = np.load('detection_text_module/template/front_laplace.npy')
-    template_back = np.load('detection_text_module/template/back_laplace.npy')
+    template_front = np.load(absolute_path + '/template/front_laplace.npy')
+    template_back = np.load(absolute_path + '/template/back_laplace.npy')
     # 反面有小区第二项，判断是否长期
-    template_validity = [np.load('detection_text_module/template/validity_longterm.npy'), np.load(
-        'detection_text_module/template/validity_date.npy')]
+    template_validity = [np.load(absolute_path + '/template/validity_longterm.npy'),
+                         np.load(absolute_path + '/template/validity_date.npy')]
     # 文本行候选框，rect: [top, bottom, left, right]
-    front_text = np.load('detection_text_module/template/front_text_rect.npy')
-    back_text = np.load('detection_text_module/template/back_text_rect.npy')
+    front_text = np.load(absolute_path + '/template/front_text_rect.npy')
+    back_text = np.load(absolute_path + '/template/back_text_rect.npy')
 
     # (0,0) (445, 0) (445, 280) (0, 280)
     target_pt = np.array([[0, 0], [card_size[0] - 1, 0],
@@ -153,13 +159,15 @@ def getTextLine(image, points):
     sum = np.max(front_conv) + np.max(back_conv)
     # 1为正面，0为反面
     front_conv1 = signal.correlate2d(template_front, card_laplace[1], mode='valid')
-    back_conv1 = signal.correlate2d(back_conv, card_laplace[0], mode='valid')
+    back_conv1 = signal.correlate2d(template_back, card_laplace[0], mode='valid')
     sum1 = np.max(front_conv1) + np.max(back_conv1)
     if sum1 > sum:
         card_binary.reverse()
         card_image.reverse()
         front_conv = front_conv1
         back_conv = back_conv1
+    cv2.imwrite('../Web/static/image_output/zheng.jpg', card_image[0])
+    cv2.imwrite('../Web/static/image_output/fan.jpg', card_image[1])
 
     text_imgs = []
 
@@ -194,7 +202,7 @@ def getTextLine(image, points):
             if right < 0:
                 k += 1
                 continue
-            right = len(hist) - 6 -right
+            right = len(hist) - 6 - right
             loc[3] -= right
         if k in [7, 8]:
             text_imgs[-1] = cv2.hconcat((text_imgs[-1], card_image[0][loc[0]:loc[1], loc[2]:loc[3]]))
@@ -223,7 +231,7 @@ def getTextLine(image, points):
         if k in [0, 1]:
             hist = card_binary[1][loc[0]:loc[1]-6, loc[2]:loc[3]].sum(axis=0) / 255
             if k == 1 and len(np.where(hist[4:24] >= 3)[0]) < 5:
-                k =2
+                k = 2
                 continue
             right = len(hist) - 6
             while right >= 0:
@@ -236,23 +244,23 @@ def getTextLine(image, points):
             if right < 0:
                 k += 1
                 continue
-            right = len(hist) -6 -right
+            right = len(hist) - 6 - right
             loc[3] -= right
         elif k == 5:
             date_img = card_binary[1][loc[0]:loc[1], loc[2]:loc[3]]
             if signal.correlate2d(template_validity[0], date_img, mode='valid')[0][0] >\
-                signal.correlate2d(template_validity[1], date_img, mode='valid')[0][0]:
+                    signal.correlate2d(template_validity[1], date_img, mode='valid')[0][0]:
                 break
             else:
                 k = 6
                 continue
 
         if k == 1:
-            text_imgs[-1] = cv2.hconcat(((text_imgs[-1], card_image[1][loc[0]:loc[1], loc[2]:loc[3]])))
+            text_imgs[-1] = cv2.hconcat((text_imgs[-1], card_image[1][loc[0]:loc[1], loc[2]:loc[3]]))
         else:
             text_imgs.append(card_image[1][loc[0]:loc[1], loc[2]:loc[3]])
 
-        if k == 0 and right> 20:
+        if k == 0 and right > 20:
             k = 2
             continue
 
@@ -260,7 +268,7 @@ def getTextLine(image, points):
 
     # 将结果保存到文件，测试使用
     # for i in range(len(text_imgs)):
-        # cv2.imshow('text' + i, text_imgs[i])
+    #     cv2.imshow('text' + text_imgs[i])
     # cv2.waitKey(0)
 
     return text_imgs
