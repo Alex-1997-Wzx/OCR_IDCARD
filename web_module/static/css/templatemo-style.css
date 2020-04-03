@@ -1,0 +1,141 @@
+body {
+	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	font-size: 24px;
+	font-weight: 300;
+	overflow-x: hidden;
+	
+}
+
+a, button {
+	transition: all 0.3s ease;
+	color: #FFFFFF;
+}
+
+button:focus {
+    outline: none;
+}
+
+a:hover {
+	color: #FFFF00;
+	text-decoration: underline;
+}
+a:focus {
+	text-decoration: none;
+	outline: none;
+}
+
+h1 {
+    margin-top: 15px;
+	color: black;
+	font-size: 2.5rem;
+}
+
+.cb-slideshow-text-container {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.tm-content {
+    z-index: 1001;
+    margin-top: 220px;
+    margin-left: 50px;
+}
+.tm-content_index {
+    z-index: 1001;
+    margin-top: 180px;
+    margin-left:460px;
+}
+.table-content{
+    margin-left: 500px;
+    color: white;
+}
+
+.form-control::-webkit-input-placeholder {
+  color: white;
+}
+
+.form-control {
+    color: #FFFFFF;
+    border-radius: .5rem;
+    background-color: transparent;
+    border: 1px solid #FFFFFF;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 1.4rem;
+    font-weight: 300;
+    padding: 0.75rem 1.4rem;
+
+}
+
+.a-upload {
+    padding: 3px 2px;
+    width: 140px;
+    height: 30px;
+    box-sizing: border-box;
+    line-height: 20px;
+    position: relative;
+    cursor: pointer;
+    color: #FFFFFF;
+    overflow: hidden;
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+    top: 5px;
+
+}
+.a-upload  input {
+    position: absolute;
+    font-size: 100px;
+    opacity: 0;
+    filter: alpha(opacity=0);
+    cursor: pointer;
+    width: 200px;
+    height: 30px;
+    left: 0;
+    top: 0;
+}
+.a-upload:hover {
+    color: #444;
+    background: #eee;
+    border-color: #ccc;
+    text-decoration: none;
+}
+
+.form-section {
+    color: #FFFFFF;
+    background-color: transparent;
+    margin-bottom: 10px;
+
+}
+
+.tm-btn-subscribe {
+	background-color: #006699;
+	border-radius: .5rem;
+    border-color: white;
+	padding: 0.75rem 1.6rem;
+    font-weight: 300;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+.tm-btn-subscribe:hover {
+    background-color: #055278;
+}
+
+
+.fa {
+    color: #FFFFFF;
+}
+
+.footer-link {
+    margin: 10px;
+	font-size: 18px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    color: white;
+    text-align:center;
+    width:100%;
+    /*z-index: 1001;*/
+}

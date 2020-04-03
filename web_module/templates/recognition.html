@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>基于OCR的身份证要素提取设计与实现</title>
+  <link rel="stylesheet" href="../static/css/bootstrap.min.css">
+  <link rel="stylesheet" href="../static/css/templatemo-style.css">
+    <style type="text/css">
+        .item .pic1 {
+            position: absolute;
+            float:left;
+            width:363px;
+            height:100px;
+            top:390px;
+            bottom: 500px;
+            left:480px;
+            right: 500px;
+
+        }
+        .item .pic2{
+            float:left;
+            width:363px;
+            height:100px;
+            position: absolute;
+            top:390px;
+            bottom: 500px;
+            left:875px;
+            right: 500px;
+        }
+        .item .content {
+            float:right;
+            position: absolute;
+            top:130px;
+            bottom: 500px;
+
+        }
+    </style>
+
+</head>
+
+<body background="../static/img/footer.jpg">
+
+	<h1>基于OCR的身份证要素提取演示系统</h1>
+	<P class="mb-5">采用深度学习技术，识别准确率高达90%</P>
+	<div class= "tm-content col-xl-5 col-sm-8 col-xs-8">
+	<form action="" enctype="multipart/form-data" method="post" class="subscribe-form">
+		<div class="row form-section">
+			<div class="col-md-5 col-sm-7 col-xs-7">
+				<div class="form-control">
+					<a href="#" class="a-upload"><input type="file" name="file">点击上传图片</a>
+				</div>
+			</div>
+			<div class="col-md-5 col-sm-5 col-xs-5">
+				<button type="submit" class="tm-btn-subscribe">识别</button>
+			</div>
+		</div>
+	</form>
+	</div>
+
+<div>
+
+ 	<div class='item'>
+        <div class="pic1">
+            <img src="{{ url_for('static', filename='./image_output/zheng.jpg',  _t=vall1)}}" width="373" height="233"  alt="上传失败" />
+        </div>
+
+        <div class="pic2">
+            <img src="{{ url_for('static', filename='./image_output/fan.jpg',  _t=vall1)}}" width="373" height="233" alt="上传失败" />
+        </div>
+
+
+
+	<div class='content'>
+        <table  class="table-content" style="font-size: 1.25rem">
+        <tr>
+            <td>姓名</td>
+            <td>{{ words[0]}}</td>
+        </tr>
+
+        <tr>
+            <td>性别</td>
+            <td>{{ words[1]}}</td>
+        </tr>
+
+        <tr>
+            <td>民族</td>
+            <td>{{ words[2]}}</td>
+        </tr>
+
+        <tr>
+            <td>出生日期</td>
+            <td>{{ words[3]}}年{{ words[4]}}月{{ words[5]}}日</td>
+
+        </tr>
+
+        <tr>
+            <td>住址</td>
+            <td>{{ words[6]}}</td>
+        </tr>
+
+        <tr>
+            <td>身份证号码</td>
+            <td>{{ words[7]}}</td>
+        </tr>
+
+        <tr>
+            <td>签证机关</td>
+            <td>{{ words[8]}}</td>
+        </tr>
+
+        <tr>
+            <td>有效期限</td>
+            <td>{{ words[9]}}</td>
+        </tr>
+        </table>
+	</div>
+</div>
+    	</div>
+
+</body>
+</html>
