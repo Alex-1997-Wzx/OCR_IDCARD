@@ -5,14 +5,15 @@
 ## 2.环境版本说明：
 	- Anaconda3: 4.7.12
 	- PyCharm: 2019.3.3
-	- OpenCV: 3.1.0
-	- Numpy: 1.12.1
+	- OpenCV-Python: 4.2.0
+	- Numpy: 1.18.1
 	- 详细组件版本信息请查看conda list文件
 
 ## 3.模块说明：
 - detection_card_module: 定位身份证顶点坐标
 - detection_text_module: 定位文本行并切分图片
 - recognitio_words_module: 识别文本行信息
+- web-module: 提供可视化界面
 
 ## 4.作者：
 内蒙古师范大学－计算机科学与技术学院－高尚
