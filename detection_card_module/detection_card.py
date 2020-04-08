@@ -11,7 +11,7 @@ import os
 """
 
     Description: 检测OCR扫描件中身份证的顶点坐标
-    输入参数: 待处理的原始OCR图片
+    输入参数: 待处理的OCR扫描件
     输出结果: 身份证正反面的四对顶点坐标,顺序为: 左上　右上　右下　左下
 
 """
@@ -52,8 +52,8 @@ def image_binary(image, image_name='1.jpg', save_path='./save_path'):
     对滤波后的图片进行二值化
     :param image: 滤波后的图片
     :param image_name: 图片名称，测试使用
-    :param save_path: 保存路径，测试适应
-    :return: 二值化后的图片
+    :param save_path: 保存路径，测试使用
+    :return: 二值图
     """
     # 计算X方向梯度
     grad_X = cv2.Sobel(image, ddepth=cv2.CV_32F, dx=1, dy=0)
@@ -66,7 +66,6 @@ def image_binary(image, image_name='1.jpg', save_path='./save_path'):
 
     # 对图片进行二值化操作
     img_binary = cv2.adaptiveThreshold(img_gradient, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 3, -3)
-    # _, img_binary = cv2.threshold(img_gradient, 120, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
 
     # 将结果保存到文件，测试使用
     # cv2.imwrite(os.path.join(save_path, image_name.split('.')[0] + '_binary.jpg'), img_binary)
@@ -101,10 +100,10 @@ def point_distance(p1, p2):
 
 def point_sort(center, card_point):
     """
-    对找到的身份证顶点进行排序
+    对身份证顶点坐标进行排序
     :param center: 最小矩形的中心坐标
     :param card_point: 矩形的顶点
-    :return: 排序后的矩形顶点，左上，右上，右下，左下
+    :return: 排序后的矩形顶点：左上，右上，右下，左下
     """
     left_point = []
     right_point = []
@@ -176,7 +175,7 @@ def getCardPoint(image):
             point = point_sort((int(rect[0][0]), int(rect[0][1])), card_point)
             res_point.append(point)
 
-    # # 将检测到的区域在原图上标示，测试适应
+    # # 将检测到的区域在原图上标示，测试使用
     # print(res_point)
     # for point in res_point:
     #     cv2.line(image, tuple(point[0]), tuple(point[1]), 255)
@@ -193,6 +192,6 @@ def getCardPoint(image):
 
 
 if __name__ == '__main__':
-    image_path = './test_images'
+    image_path = './test_images/'
     image = cv2.imread(os.path.join(image_path, '1.jpg'), 0)
     getCardPoint(image)
