@@ -1,7 +1,7 @@
 # -- coding: utf-8 --
 # @Time : 2020/3/10 下午8:30
 # @Author : Gao Shang
-# @File : cnn_main.py
+# @File : training.py
 # @Software : PyCharm
 
 from __future__ import print_function
