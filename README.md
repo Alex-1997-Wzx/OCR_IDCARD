@@ -15,9 +15,14 @@
     - detection_text_module: 定位身份证图片中的文本行信息
     - recognition_words_module: 识别文本行信息
     - web-module: 提供可视化界面
+    - train_model_module: 训练模型代码
+
+## 4.使用说明：
+字符界面：python ./main.py
+可视化界面：python ./web_module/server.py 访问：http://127.0.0.1
 
 ## 4.作者：
-内蒙古师范大学－计算机科学与技术学院－高尚
+内蒙古师范大学－计算机科学技术学院－高尚
 
 ## 5.版权说明：
-个人项目部分代码，欢迎指正讨论
+个人项目部分代码，欢迎指正讨论。
