@@ -3,7 +3,6 @@ import cv2
 import lmdb  # install lmdb by "pip install lmdb"
 import numpy as np
 import glob
-# from genLineText import GenTextImage
 
 
 # 删除
@@ -69,15 +68,6 @@ def createDataset(outputPath, imagePathList, labelList, lexiconList=None):
     cache['num-samples'] = str(nSamples).encode()
     writeCache(env, cache)
     print('Created dataset with %d samples' % nSamples)
-
-
-# 删除
-def read_text(path):
-    with open(path) as f:
-        text = f.read()
-    text = text.strip()
-
-    return text
 
 
 if __name__ == '__main__':
