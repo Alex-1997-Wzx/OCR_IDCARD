@@ -5,108 +5,57 @@
 # @Software : PyCharm
 
 from __future__ import print_function
-import argparse
 import os
 import random
-from networks import chsNet
 import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
 import torch.optim as optim
 import torch.utils.data
-from networks_train import utils
-from networks_train import dataset
+from train_model_module.model.networks import chsNet
+from train_model_module import utils
+from train_model_module import dataset
+from train_model_module.alphabet_chinese import alphabet
 from torch.autograd import Variable
 from warpctc_pytorch import CTCLoss
-from networks_train.chinese import alphabet
-from torchvision.transforms import transforms
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    '--trainroot', help='path to dataset', default='./data/lmdb/test/train')
-parser.add_argument(
-    '--valroot', help='path to dataset', default='./data/lmdb/test/val')
-parser.add_argument(
-    '--workers', type=int, help='number of data loading workers', default=4)
-parser.add_argument(
-    '--batchSize', type=int, default=2, help='input batch size')  # 128
-parser.add_argument(
-    '--imgH',
-    type=int,
-    default=22,  # 32
-    help='the height of the input image to network')
-parser.add_argument(
-    '--imgW',
-    type=int,
-    default=220,  # 256
-    help='the width of the input image to network')
-parser.add_argument(
-    '--niter', type=int, default=1, help='训练的epoch次数')  # 1000000
-parser.add_argument(
-    '--lr',
-    type=float,
-    default=0.01,  # 0.00005
-    help='learning rate for Critic, default=0.00005')
-parser.add_argument(
-    '--crnn',
-    help="path to crnn (to continue training)",
-    default=
-    '/home/alton/桌面/CCF-OCR-master/networks_train/model_data/model_chs.pth')
+train_path = '/media/alton/Data/Documents/DataSet/DataFountain/train/lmdb/name'
+valid_path = '/media/alton/Data/Documents/DataSet/DataFountain/valid/lmdb/name'
+cnn_data = '/media/alton/Data/Documents/Alton_OCR_Project/recognition_words_module/data/chs.pth'
+model_save = './save_model'
+workers = 4
+batchSize = 2
+imgH = 22
+imgW = 220
+niter = 1000000
+lr = 0.0005
+display_loss = 10
+display_accuray = 20
 
-# parser.add_argument('--crnn', help="path to crnn (to continue training)", default='')
-parser.add_argument('--alphabet', default=alphabet)
-parser.add_argument(
-    '--experiment',
-    help='Where to store samples and models',
-    default='./save_model')
-parser.add_argument(
-    '--displayInterval', type=int, default=10, help='执行指定次数后显示Loss值')
-parser.add_argument(
-    '--valInterval', type=int, default=20, help='执行指定次数后计算损失值和正确率')  # 100
-parser.add_argument(
-    '--keep_ratio',
-    action='store_true',
-    help='whether to keep ratio for image resize')
-parser.add_argument(
-    '--random_sample',
-    action='store_true',
-    help='whether to sample the dataset with random sampler')
-opt = parser.parse_args()
+os.system('mkdir {0}'.format(model_save))
 
-ifUnicode = True
-if opt.experiment is None:
-    opt.experiment = 'expr'
-os.system('mkdir {0}'.format(opt.experiment))
-
-opt.manualSeed = random.randint(1, 10000)  # fix seed
-# print("Random Seed: ", opt.manualSeed)
-random.seed(opt.manualSeed)
-np.random.seed(opt.manualSeed)
-torch.manual_seed(opt.manualSeed)
+manualSeed = random.randint(1, 10000)  # fix seed
+random.seed(manualSeed)
+np.random.seed(manualSeed)
+torch.manual_seed(manualSeed)
 
 cudnn.benchmark = True
 
-train_dataset = dataset.lmdbDataset(root=opt.trainroot)
-test_dataset = dataset.lmdbDataset(root=opt.valroot)
+train_dataset = dataset.lmdbDataset(root=train_path)
+test_dataset = dataset.lmdbDataset(root=valid_path)
 
-# transform=dataset.resizeNormalize((220, 22))transform=transforms.Grayscale())
 
 assert train_dataset
-if not opt.random_sample:
-    sampler = dataset.randomSequentialSampler(train_dataset, opt.batchSize)
-else:
-    sampler = None
+sampler = dataset.randomSequentialSampler(train_dataset, batchSize)
 
 train_loader = torch.utils.data.DataLoader(
     train_dataset,
-    batch_size=opt.batchSize,
+    batch_size=batchSize,
     shuffle=False,
     sampler=sampler,
-    num_workers=int(opt.workers),
+    num_workers=int(workers),
     collate_fn=dataset.alignCollate(keep_ratio=True))
 
-
-alphabet = opt.alphabet
 nclass = len(alphabet) + 1
 nc = 1
 
@@ -114,7 +63,7 @@ converter = utils.strLabelConverter(alphabet)
 criterion = CTCLoss()
 
 
-# custom weights initialization called on crnn
+# 初始化权值
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv') != -1:
@@ -125,19 +74,19 @@ def weights_init(m):
 
 
 # 创建网络模型
-crnn = chsNet(nc, len(alphabet) + 1)
-# crnn.apply(weights_init)
-# if opt.crnn != '':
-#     print('loading pretrained model from %s' % opt.crnn)
+cnn = chsNet(nc, len(alphabet) + 1)
+cnn.apply(weights_init)
+if cnn_data != '':
+    print('loading pretrained model from %s' % cnn_data)
 
-crnn.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(opt.crnn).items()})
+cnn.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(cnn_data).items()})
 
-image = torch.FloatTensor(opt.batchSize, 1, opt.imgH, opt.imgW)  # 3
-text = torch.IntTensor(opt.batchSize * 5)
-length = torch.IntTensor(opt.batchSize)
+image = torch.FloatTensor(batchSize, 1, imgH, imgW)  # 3
+text = torch.IntTensor(batchSize * 5)
+length = torch.IntTensor(batchSize)
 
 if torch.cuda.is_available():
-    crnn = crnn.cuda()
+    cnn = cnn.cuda()
     image = image.cuda()
     criterion = criterion.cuda()
 
@@ -148,22 +97,22 @@ length = Variable(length)
 # loss averager
 loss_avg = utils.averager()
 
-optimizer = optim.RMSprop(crnn.parameters(), lr=opt.lr)
+optimizer = optim.RMSprop(cnn.parameters(), lr=lr)
 
 
 def val(net, test_dataset, criterion, max_iter=2):
     print('Start val')
 
-    for p in crnn.parameters():
+    for p in cnn.parameters():
         p.requires_grad = False
 
     net.eval()
-    net.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(opt.crnn).items()})
+    net.load_state_dict({k.replace('module.', ''): v for k, v in torch.load(cnn_data).items()})
     val_loader = torch.utils.data.DataLoader(
         test_dataset,
         shuffle=True,
-        batch_size=opt.batchSize,
-        num_workers=int(opt.workers),
+        batch_size=batchSize,
+        num_workers=int(workers),
         collate_fn=dataset.alignCollate(keep_ratio=True))
 
     val_iter = iter(val_loader)
@@ -171,7 +120,7 @@ def val(net, test_dataset, criterion, max_iter=2):
     n_correct = 0
     loss_avg = utils.averager()
 
-    image = torch.FloatTensor(opt.batchSize, 1, opt.imgH, opt.imgW)
+    image = torch.FloatTensor(batchSize, 1, imgH, imgW)
     max_iter = min(max_iter, len(val_loader))
     for i in range(max_iter):
         data = val_iter.next()
@@ -181,8 +130,7 @@ def val(net, test_dataset, criterion, max_iter=2):
         batch_size = cpu_images.size(0)
         # print('cpu images', cpu_images, 'shape', cpu_images.size())
         utils.loadData(image, cpu_images)
-        if ifUnicode:
-            cpu_texts = [clean_txt(tx.encode('utf-8').decode('utf-8')) for tx in cpu_texts]
+        cpu_texts = [clean_txt(tx.encode('utf-8').decode('utf-8')) for tx in cpu_texts]
         t, l = converter.encode(cpu_texts)
         # 重新匹配尺寸
         utils.loadData(text, t)  # 文字索引
@@ -190,7 +138,7 @@ def val(net, test_dataset, criterion, max_iter=2):
 
         image = cpu_images * 255
         image = image.cuda()
-        preds = crnn(image)
+        preds = cnn(image)
         preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
 
         cost = criterion(preds, text, preds_size, length) / batch_size
@@ -209,7 +157,7 @@ def val(net, test_dataset, criterion, max_iter=2):
             if pred.strip() == target.strip():
                 n_correct += 1
 
-    accuracy = n_correct / float(max_iter * opt.batchSize)
+    accuracy = n_correct / float(max_iter * batchSize)
     testLoss = loss_avg.val()
     # print('Test loss: %f, accuray: %f' % (testLoss, accuracy))
     return testLoss, accuracy
@@ -217,7 +165,7 @@ def val(net, test_dataset, criterion, max_iter=2):
 
 def clean_txt(txt):
     """
-    filter char where not in alphabet with ' '
+    删掉不在字符集中的汉字
     """
     newTxt = u''
     for t in txt:
@@ -231,9 +179,7 @@ def clean_txt(txt):
 def trainBatch(net, criterion, optimizer, flage=False):
     data = train_iter.next()
     cpu_images, cpu_texts = data  # decode utf-8 to unicode
-
-    if ifUnicode:
-        cpu_texts = [clean_txt(tx) for tx in cpu_texts]
+    cpu_texts = [clean_txt(tx) for tx in cpu_texts]
     batch_size = cpu_images.size(0)
     # utils.loadData(image, cpu_images)
     t, l = converter.encode(cpu_texts)
@@ -241,42 +187,41 @@ def trainBatch(net, criterion, optimizer, flage=False):
     utils.loadData(length, l)
     image = cpu_images * 255
     image = image.cuda()
-    preds = crnn(image)
+    preds = cnn(image)
 
     preds_size = Variable(torch.IntTensor([preds.size(0)] * batch_size))
     cost = criterion(preds / 255, text, preds_size, length) / batch_size
-    crnn.zero_grad()
+    cnn.zero_grad()
     cost.backward()
     if flage:
         lr = 0.0001
-        optimizer = optim.Adadelta(crnn.parameters(), lr=lr)
+        optimizer = optim.Adadelta(cnn.parameters(), lr=lr)
     optimizer.step()
     return cost
 
 
-for epoch in range(opt.niter):
+for epoch in range(niter):
     train_iter = iter(train_loader)
     for i in range(len(train_loader)):
         print('The step{} ........\n'.format(i))
-        for p in crnn.parameters():
+        for p in cnn.parameters():
             p.requires_grad = True
 
-        crnn.train()
-        cost = trainBatch(crnn, criterion, optimizer)
+        cnn.train()
+        cost = trainBatch(cnn, criterion, optimizer)
         loss_avg.add(cost)
 
-        if i % opt.displayInterval == 0:
+        if i % display_loss == 0:
             print('[%d/%d][%d/%d] Loss: %f' %
-                  (epoch, opt.niter, i, len(train_loader), loss_avg.val()))
+                  (epoch, niter, i, len(train_loader), loss_avg.val()))
             loss_avg.reset()
 
-        if i % opt.valInterval == 0:
-            testLoss, accuracy = val(crnn, test_dataset, criterion)
+        if i % display_accuray == 0:
+            testLoss, accuracy = val(cnn, test_dataset, criterion)
             print('Test loss: %f, accuray: %f' % (testLoss, accuracy))
             # print("epoch:{},step:{},Test loss:{},accuracy:{},train loss:{}".
             #       format(epoch, num, testLoss, accuracy, loss_avg.val()))
             # loss_avg.reset()
 
-            print('Save model to:', opt.experiment)
-            torch.save(crnn.state_dict(), '{}/netCNN.pth'.format(opt.experiment))
-        # do checkpointing
+            print('Save model to:', model_save)
+            torch.save(cnn.state_dict(), '{}/netCNN.pth'.format(model_save))
