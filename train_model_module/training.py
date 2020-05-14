@@ -14,7 +14,7 @@ import torch.optim as optim
 import torch.utils.data
 from train_model_module.model.networks import chsNet
 from train_model_module import utils
-from train_model_module import dataset
+from train_model_module import lmdb_dataset
 from train_model_module.alphabet_chinese import alphabet
 from torch.autograd import Variable
 from warpctc_pytorch import CTCLoss
@@ -31,33 +31,27 @@ niter = 1000000
 lr = 0.0005
 display_loss = 10
 display_accuray = 20
+save_pth = 300
 
 os.system('mkdir {0}'.format(model_save))
 
-manualSeed = random.randint(1, 10000)  # fix seed
+manualSeed = random.randint(1, 10000)
 random.seed(manualSeed)
 np.random.seed(manualSeed)
 torch.manual_seed(manualSeed)
 
 cudnn.benchmark = True
 
-train_dataset = dataset.lmdbDataset(root=train_path)
-test_dataset = dataset.lmdbDataset(root=valid_path)
+train_dataset = lmdb_dataset.lmdbDataset(root=train_path)
+test_dataset = lmdb_dataset.lmdbDataset(root=valid_path)
 
 
 assert train_dataset
-sampler = dataset.randomSequentialSampler(train_dataset, batchSize)
+sampler = lmdb_dataset.randomSequentialSampler(train_dataset, batchSize)
 
-train_loader = torch.utils.data.DataLoader(
-    train_dataset,
-    batch_size=batchSize,
-    shuffle=False,
-    sampler=sampler,
-    num_workers=int(workers),
-    collate_fn=dataset.alignCollate(keep_ratio=True))
-
-nclass = len(alphabet) + 1
-nc = 1
+train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batchSize, shuffle=False,
+                                           sampler=sampler, num_workers=int(workers),
+                                           collate_fn=lmdb_dataset.alignCollate(keep_ratio=True))
 
 converter = utils.strLabelConverter(alphabet)
 criterion = CTCLoss()
@@ -74,7 +68,7 @@ def weights_init(m):
 
 
 # 创建网络模型
-cnn = chsNet(nc, len(alphabet) + 1)
+cnn = chsNet(1, len(alphabet) + 1)
 cnn.apply(weights_init)
 if cnn_data != '':
     print('loading pretrained model from %s' % cnn_data)
@@ -113,7 +107,7 @@ def val(net, test_dataset, criterion, max_iter=2):
         shuffle=True,
         batch_size=batchSize,
         num_workers=int(workers),
-        collate_fn=dataset.alignCollate(keep_ratio=True))
+        collate_fn=lmdb_dataset.alignCollate(keep_ratio=True))
 
     val_iter = iter(val_loader)
 
@@ -223,5 +217,6 @@ for epoch in range(niter):
             #       format(epoch, num, testLoss, accuracy, loss_avg.val()))
             # loss_avg.reset()
 
+        if i % save_pth == 0:
             print('Save model to:', model_save)
             torch.save(cnn.state_dict(), '{}/netCNN.pth'.format(model_save))
